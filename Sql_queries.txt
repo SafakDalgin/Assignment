@@ -1,0 +1,29 @@
+
+a.	A column to be called “sale_price_zscore” that represents, for each sale/row, the Z-Score of “SALE_PRICE” of that row as normalized against the entirety of the dataset
+
+select A.*,case when ISNUMERIC(stdev_sale_price)=0 and stdev_sale_price<>0 and stdev_sale_price is not null then
+ ([SALE PRICE]-avg_sale_price)/stdev_sale_price else 'not calculated' end "sale_price_zscore" from nyc_rolling_sales A,
+(select avg(case when ISNUMERIC([SALE PRICE])=0 then '' else [SALE PRICE] end) avg_sale_price, 
+stdev(case when ISNUMERIC([SALE PRICE])=0 then '' else [SALE PRICE] end) stdev_sale_price from nyc_rolling_sales) as B
+
+
+
+b.	A column to be called “sale_price_zscore_neighborhood” that represents, for each sale/row, the Z-Score of “SALE_PRICE” but as normalized 
+based on the NEIGHBORHOOD and BUILDING_CLASS segment to which that row belongs
+
+
+select A.*,case when ISNUMERIC(stdev_sale_price_nb)=0 and stdev_sale_price_nb<>0 and stdev_sale_price_nb is not null 
+then([SALE PRICE]-avg_sale_price_nb)/stdev_sale_price_nb else 'not calculated' end "sale_price_zscore_neighborhood" from nyc_rolling_sales A,
+(select NEIGHBORHOOD,BUILDING_CLASS,avg(case when ISNUMERIC([SALE PRICE])=0 then '' else [SALE PRICE] end) avg_sale_price_nb, 
+stdev(case when ISNUMERIC([SALE PRICE])=0 then '' else [SALE PRICE] end) stdev_sale_price_nb from nyc_rolling_sales
+group by NEIGHBORHOOD,BUILDING_CLASS) as B
+
+
+c.	Columns that compute “square_ft_per_unit” and “price_per_unit”
+
+select A.*,case when ISNUMERIC([GROSS SQUARE FEET])=1 and ISNUMERIC([TOTAL UNITS])=1 and [TOTAL UNITS]>0 then 
+cast([GROSS SQUARE FEET]/[TOTAL UNITS] as FLOAT,2) else 'not calculated' end "square_ft_per_unit” from nyc_rolling_sales A
+
+
+select A.*,case when ISNUMERIC([SALE PRICE])=1 and ISNUMERIC([TOTAL UNITS])=1 and [TOTAL UNITS]>0 then 
+cast([SALE PRICE]/[TOTAL UNITS] as FLOAT,2) else 'not calculated' end "price_per_unit” from nyc_rolling_sales A
